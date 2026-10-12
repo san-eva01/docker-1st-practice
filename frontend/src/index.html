@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reservación de Espacios</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Reservación de Espacios</h1>
+    <p class="subtitulo">Nginx · PHP · MariaDB · Redis · Mailpit</p>
+    <div class="indicadores">
+      <span id="estado-api" class="chip">API: ...</span>
+      <span id="fuente" class="chip">Fuente: —</span>
+      <span id="contador" class="chip">Consultas: —</span>
+      <a class="chip enlace" href="http://localhost:8025" target="_blank" rel="noopener">Abrir Mailpit ↗</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="tarjeta">
+      <h2 id="titulo-form">Nueva reservación</h2>
+      <form id="formulario" novalidate>
+        <input type="hidden" id="id">
+        <div class="campos">
+          <label>Espacio
+            <input id="espacio" list="espacios" required minlength="3" maxlength="100" placeholder="Ej. Auditorio Principal">
+            <datalist id="espacios">
+              <option value="Auditorio Principal">
+              <option value="Laboratorio de Cómputo 1">
+              <option value="Laboratorio de Cómputo 2">
+              <option value="Sala de Juntas A">
+              <option value="Sala de Juntas B">
+            </datalist>
+          </label>
+          <label>Solicitante
+            <input id="solicitante" required minlength="3" maxlength="100" placeholder="Nombre completo">
+          </label>
+          <label>Correo
+            <input id="correo" type="email" required maxlength="150" placeholder="nombre@correo.com">
+          </label>
+          <label>Fecha
+            <input id="fecha" type="date" required>
+          </label>
+          <label>Hora inicio
+            <input id="hora_inicio" type="time" required>
+          </label>
+          <label>Hora fin
+            <input id="hora_fin" type="time" required>
+          </label>
+          <label>Estado
+            <select id="estado">
+              <option value="pendiente">pendiente</option>
+              <option value="confirmada">confirmada</option>
+              <option value="cancelada">cancelada</option>
+            </select>
+          </label>
+        </div>
+        <div class="acciones">
+          <button type="submit" id="btn-guardar">Guardar</button>
+          <button type="button" id="btn-cancelar" class="secundario" hidden>Cancelar edición</button>
+        </div>
+      </form>
+    </section>
+
+    <div id="mensaje" class="mensaje" role="status" hidden></div>
+
+    <section class="tarjeta">
+      <div class="barra">
+        <h2>Reservaciones <small id="total"></small></h2>
+        <form id="form-buscar" class="buscar">
+          <input id="buscar" type="search" placeholder="Buscar por espacio, solicitante o correo" maxlength="100">
+          <button type="submit">Buscar</button>
+        </form>
+      </div>
+      <div class="tabla-contenedor">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Espacio</th><th>Solicitante</th><th>Fecha</th><th>Horario</th><th>Estado</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="tabla"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

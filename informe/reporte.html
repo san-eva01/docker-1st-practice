@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Reporte – Práctica Docker Compose con cinco servicios</title>
+<style>
+  @page { size: A4; margin: 20mm 18mm 20mm 18mm; }
+  :root { --azul: #3b0764; --azul2: #6b21a8; --gris: #6b7280; --borde: #d1d5db; --fondo: #f3f4f6; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Calibri, Arial, sans-serif; font-size: 10.5pt; line-height: 1.5; color: #111827; margin: 0; }
+  h1, h2, h3 { color: var(--azul); line-height: 1.25; }
+  h2 { font-size: 15pt; border-bottom: 2px solid var(--azul); padding-bottom: 4px; margin: 0 0 10px; break-after: avoid; }
+  h3 { font-size: 12pt; margin: 18px 0 6px; break-after: avoid; }
+  section.cap { break-before: page; }
+  p { margin: 6px 0; text-align: justify; }
+  ul, ol { margin: 6px 0; padding-left: 22px; }
+  li { margin: 2px 0; }
+  code { font-family: "Cascadia Mono", Consolas, monospace; font-size: 9pt; background: var(--fondo); padding: 1px 4px; border-radius: 3px; }
+  pre { font-family: "Cascadia Mono", Consolas, monospace; font-size: 8.2pt; line-height: 1.4; background: #f8fafc; border: 1px solid var(--borde); border-left: 4px solid var(--azul2); padding: 8px 10px; white-space: pre-wrap; word-break: break-word; margin: 8px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 9.5pt; break-inside: avoid; }
+  th, td { border: 1px solid var(--borde); padding: 4px 7px; text-align: left; vertical-align: top; }
+  th { background: var(--azul); color: #fff; font-weight: 600; }
+  tr:nth-child(even) td { background: #f9fafb; }
+  figure { margin: 10px 0 14px; text-align: center; break-inside: avoid; }
+  figure img { max-width: 100%; max-height: 225mm; border: 1px solid var(--borde); }
+  img[src*="capturas/u"], img[src*="capturas/m"] { max-width: 80%; }
+  figcaption { font-size: 9pt; color: var(--gris); margin-top: 4px; }
+  figcaption b { color: #111827; }
+  .ok { color: #15803d; font-weight: 700; }
+  .nota { background: #f5f3ff; border-left: 4px solid var(--azul2); padding: 8px 12px; margin: 10px 0; break-inside: avoid; }
+  .aviso { background: #fffbeb; border-left: 4px solid #d97706; padding: 8px 12px; margin: 10px 0; break-inside: avoid; }
+
+  /* Portada */
+  .portada { height: 250mm; display: flex; flex-direction: column; justify-content: space-between; text-align: center; }
+  .portada .inst { font-size: 12pt; color: var(--gris); letter-spacing: .5px; }
+  .portada h1 { font-size: 24pt; margin: 30mm 0 4mm; }
+  .portada .sub { font-size: 13pt; color: var(--azul2); }
+  .portada .stack { margin-top: 8mm; font-size: 11pt; color: var(--gris); }
+  .portada table { width: 75%; margin: 0 auto; font-size: 11pt; }
+  .portada td:first-child { width: 38%; font-weight: 600; background: var(--fondo); }
+  .indice ol { columns: 2; column-gap: 30px; font-size: 10pt; }
+</style>
+</head>
+<body>
+
+<!-- ===================== PORTADA ===================== -->
+<div class="portada">
+  <div>
+    <div class="inst">INFRAESTRUCTURA DE SERVICIOS</div>
+    <h1>Práctica individual de Docker Compose con cinco servicios</h1>
+    <div class="sub">Sistema de Reservación de Espacios</div>
+    <div class="stack">Frontend (Nginx) · Backend (PHP + Apache) · MariaDB · Redis · Mailpit</div>
+  </div>
+  <table>
+    <tr><td>Estudiante</td><td>Sandra Chávez Hernández</td></tr>
+    <tr><td>Número de control</td><td>22121358</td></tr>
+    <tr><td>Grupo</td><td>A</td></tr>
+    <tr><td>Asignatura</td><td>Infraestructura de Servicios</td></tr>
+    <tr><td>Modalidad</td><td>Individual</td></tr>
+    <tr><td>Sistema asignado</td><td>Reservación de espacios (último dígito 8)</td></tr>
+    <tr><td>Mejora individual</td><td>Filtro de búsqueda</td></tr>
+    <tr><td>Fecha</td><td>11 de octubre de 2026</td></tr>
+  </table>
+  <div></div>
+</div>
+
+<!-- ===================== ÍNDICE ===================== -->
+<section class="cap indice">
+  <h2>Contenido</h2>
+  <ol>
+    <li>Introducción y objetivos</li>
+    <li>Dominio asignado y modelo de datos</li>
+    <li>Arquitectura de la solución</li>
+    <li>Estructura del repositorio</li>
+    <li>Desarrollo de la práctica por etapas</li>
+    <li>Integración y puesta en marcha</li>
+    <li>Pruebas funcionales del CRUD</li>
+    <li>Persistencia en MariaDB</li>
+    <li>Redis: caché, invalidación y contador</li>
+    <li>Notificaciones con Mailpit</li>
+    <li>Red, aislamiento y recuperación</li>
+    <li>Resolución de nombres por DNS interno</li>
+    <li>Seguridad</li>
+    <li>Mejora individual: filtro de búsqueda</li>
+    <li>Resumen de pruebas obligatorias</li>
+    <li>Notas técnicas</li>
+    <li>Preguntas de reflexión</li>
+    <li>Lista de cotejo</li>
+    <li>Conclusiones</li>
+  </ol>
+
+  <h2 style="margin-top:24px">1. Introducción y objetivos</h2>
+  <p>En esta práctica se diseñó, construyó y verificó una aplicación web distribuida en <b>cinco contenedores</b>
+  orquestados con <b>Docker Compose</b>. La aplicación es un sistema de reservación de espacios. Permite registrar,
+  consultar, modificar y eliminar reservaciones de auditorios, laboratorios y salas.</p>
+  <p>Los cinco servicios se comunican por una red interna llamada <code>app_network</code> y se encuentran entre sí
+  por su nombre de servicio. MariaDB conserva los datos en un volumen nombrado. Redis guarda en caché el listado y
+  cuenta las consultas. Mailpit captura un correo de prueba cada vez que se crea una reservación.</p>
+  <p><b>Objetivos cumplidos:</b></p>
+  <ul>
+    <li>Se construyeron imágenes propias para el frontend y el backend mediante Dockerfile.</li>
+    <li>Se definieron y ejecutaron los cinco servicios desde un único archivo <code>compose.yaml</code>.</li>
+    <li>Se configuró una red interna y se usaron los nombres de servicio como host.</li>
+    <li>La información de MariaDB se conserva en un volumen nombrado.</li>
+    <li>Redis funciona como caché con TTL y como contador de consultas.</li>
+    <li>El backend genera una notificación de correo que se puede ver en Mailpit.</li>
+    <li>Se aplicaron health checks, <code>depends_on</code>, variables de entorno y política de reinicio.</li>
+    <li>La solución se verificó con comandos, registros y pruebas funcionales.</li>
+  </ul>
+</section>
+
+<!-- ===================== 2. DOMINIO ===================== -->
+<section class="cap">
+  <h2>2. Dominio asignado y modelo de datos</h2>
+  <p>El último dígito del número de control (22121358) es <b>8</b>. Según la tabla de asignación, el sistema es
+  <b>Reservación de espacios</b> y la entidad principal es <b>Reservación</b>. Cada reservación indica qué espacio
+  se reserva, quién lo solicita, su correo, la fecha, el horario y el estado (pendiente, confirmada o cancelada).</p>
+
+  <table>
+    <tr><th>Columna</th><th>Tipo</th><th>Restricción</th></tr>
+    <tr><td>id</td><td>INT UNSIGNED AUTO_INCREMENT</td><td>PRIMARY KEY</td></tr>
+    <tr><td>espacio</td><td>VARCHAR(100)</td><td>NOT NULL, CHECK longitud ≥ 3</td></tr>
+    <tr><td>solicitante</td><td>VARCHAR(100)</td><td>NOT NULL, CHECK longitud ≥ 3</td></tr>
+    <tr><td>correo</td><td>VARCHAR(150)</td><td>NOT NULL</td></tr>
+    <tr><td>fecha</td><td>DATE</td><td>NOT NULL</td></tr>
+    <tr><td>hora_inicio / hora_fin</td><td>TIME</td><td>NOT NULL, CHECK hora_fin &gt; hora_inicio</td></tr>
+    <tr><td>estado</td><td>ENUM('pendiente','confirmada','cancelada')</td><td>DEFAULT 'pendiente'</td></tr>
+    <tr><td>creado_en / actualizado_en</td><td>TIMESTAMP</td><td>Automáticos</td></tr>
+  </table>
+  <p>Además, la restricción <code>UNIQUE (espacio, fecha, hora_inicio)</code> impide que el mismo espacio se
+  reserve dos veces con la misma fecha y hora de inicio. Si se intenta, la API responde <b>409 Conflict</b>.
+  El script <code>database/init.sql</code> crea la tabla e inserta tres registros iniciales:</p>
+  <pre>-- Sistema de reservación de espacios
+-- Se ejecuta solo la primera vez que se crea el volumen de datos.
+
+CREATE TABLE IF NOT EXISTS reservaciones (
+    id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    espacio      VARCHAR(100) NOT NULL,
+    solicitante  VARCHAR(100) NOT NULL,
+    correo       VARCHAR(150) NOT NULL,
+    fecha        DATE         NOT NULL,
+    hora_inicio  TIME         NOT NULL,
+    hora_fin     TIME         NOT NULL,
+    estado       ENUM('pendiente', 'confirmada', 'cancelada') NOT NULL DEFAULT 'pendiente',
+    creado_en    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP  NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT pk_reservaciones PRIMARY KEY (id),
+    CONSTRAINT uq_espacio_horario UNIQUE (espacio, fecha, hora_inicio),
+    CONSTRAINT chk_horario CHECK (hora_fin &gt; hora_inicio),
+    CONSTRAINT chk_espacio CHECK (CHAR_LENGTH(TRIM(espacio)) &gt;= 3),
+    CONSTRAINT chk_solicitante CHECK (CHAR_LENGTH(TRIM(solicitante)) &gt;= 3)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO reservaciones (espacio, solicitante, correo, fecha, hora_inicio, hora_fin, estado) VALUES
+    ('Laboratorio de Cómputo 1', 'Ana López',     'ana.lopez@practica.local',     '2026-10-15', '08:00', '10:00', 'confirmada'),
+    ('Auditorio Principal',      'Carlos Pérez',  'carlos.perez@practica.local',  '2026-10-16', '12:00', '14:00', 'pendiente'),
+    ('Sala de Juntas A',         'María García',  'maria.garcia@practica.local',  '2026-10-17', '16:00', '17:30', 'cancelada');</pre>
+</section>
+
+<!-- ===================== 3. ARQUITECTURA ===================== -->
+<section class="cap">
+  <h2>3. Arquitectura de la solución</h2>
+  <figure>
+    <svg viewBox="0 0 760 360" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial" font-size="13">
+      <defs>
+        <marker id="fl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3b0764"/></marker>
+      </defs>
+      <!-- Navegador -->
+      <rect x="20" y="140" width="130" height="70" rx="8" fill="#e5e7eb" stroke="#6b7280"/>
+      <text x="85" y="170" text-anchor="middle" font-weight="700">Navegador</text>
+      <text x="85" y="190" text-anchor="middle" font-size="11" fill="#374151">(host)</text>
+      <!-- red -->
+      <rect x="200" y="20" width="540" height="320" rx="12" fill="#f8fafc" stroke="#6b21a8" stroke-dasharray="6 4"/>
+      <text x="725" y="42" text-anchor="end" fill="#6b21a8" font-weight="700">app_network (bridge)</text>
+      <!-- frontend -->
+      <rect x="230" y="135" width="150" height="80" rx="8" fill="#ede9fe" stroke="#3b0764"/>
+      <text x="305" y="162" text-anchor="middle" font-weight="700">frontend</text>
+      <text x="305" y="180" text-anchor="middle" font-size="11">Nginx 1.27</text>
+      <text x="305" y="197" text-anchor="middle" font-size="11">estáticos + /api/</text>
+      <!-- backend -->
+      <rect x="420" y="135" width="140" height="80" rx="8" fill="#ede9fe" stroke="#3b0764"/>
+      <text x="490" y="162" text-anchor="middle" font-weight="700">backend</text>
+      <text x="490" y="180" text-anchor="middle" font-size="11">PHP 8.3 + Apache</text>
+      <text x="490" y="197" text-anchor="middle" font-size="11">API REST :80</text>
+      <!-- db -->
+      <rect x="600" y="60" width="120" height="60" rx="8" fill="#fef3c7" stroke="#b45309"/>
+      <text x="660" y="85" text-anchor="middle" font-weight="700">db</text>
+      <text x="660" y="103" text-anchor="middle" font-size="11">MariaDB 11.4 :5432</text>
+      <!-- redis -->
+      <rect x="600" y="150" width="120" height="60" rx="8" fill="#fee2e2" stroke="#b91c1c"/>
+      <text x="660" y="175" text-anchor="middle" font-weight="700">redis</text>
+      <text x="660" y="193" text-anchor="middle" font-size="11">Redis 7.4 :6379</text>
+      <!-- mailpit -->
+      <rect x="600" y="240" width="120" height="60" rx="8" fill="#dcfce7" stroke="#15803d"/>
+      <text x="660" y="265" text-anchor="middle" font-weight="700">mailpit</text>
+      <text x="660" y="283" text-anchor="middle" font-size="11">SMTP :1025</text>
+      <!-- volumen -->
+      <rect x="430" y="45" width="130" height="34" rx="17" fill="#fff" stroke="#b45309"/>
+      <text x="495" y="67" text-anchor="middle" font-size="11">vol. MariaDB_data</text>
+      <line x1="560" y1="70" x2="598" y2="85" stroke="#b45309" stroke-dasharray="3 3"/>
+      <rect x="430" y="255" width="120" height="34" rx="17" fill="#fff" stroke="#b91c1c"/>
+      <text x="490" y="277" text-anchor="middle" font-size="11">vol. redis_data</text>
+      <line x1="550" y1="265" x2="610" y2="210" stroke="#b91c1c" stroke-dasharray="3 3"/>
+      <!-- flechas -->
+      <line x1="150" y1="165" x2="228" y2="165" stroke="#3b0764" stroke-width="2" marker-end="url(#fl)"/>
+      <text x="189" y="155" text-anchor="middle" font-size="11" font-weight="700">:8081</text>
+      <line x1="380" y1="175" x2="418" y2="175" stroke="#3b0764" stroke-width="2" marker-end="url(#fl)"/>
+      <text x="399" y="168" text-anchor="middle" font-size="10">/api/</text>
+      <line x1="560" y1="160" x2="598" y2="100" stroke="#3b0764" stroke-width="2" marker-end="url(#fl)"/>
+      <line x1="560" y1="178" x2="598" y2="178" stroke="#3b0764" stroke-width="2" marker-end="url(#fl)"/>
+      <line x1="560" y1="198" x2="598" y2="258" stroke="#3b0764" stroke-width="2" marker-end="url(#fl)"/>
+      <path d="M85,210 L85,320 L660,320 L660,302" fill="none" stroke="#15803d" stroke-width="2" marker-end="url(#fl)"/>
+      <text x="300" y="314" font-size="11" font-weight="700" fill="#15803d">:8025 interfaz web de Mailpit</text>
+    </svg>
+    <figcaption><b>Figura 1.</b> Arquitectura de los cinco servicios. Solo se publican los puertos 8081 y 8025.</figcaption>
+  </figure>
+
+  <table>
+    <tr><th>Servicio</th><th>Tecnología</th><th>Responsabilidad</th><th>Exposición</th></tr>
+    <tr><td>frontend</td><td>nginx:1.27-alpine + HTML/CSS/JS</td><td>Interfaz y proxy de <code>/api/</code> hacia backend</td><td>Host 8081</td></tr>
+    <tr><td>backend</td><td>php:8.3-apache (imagen propia)</td><td>API REST, lógica, MariaDB, Redis y SMTP</td><td>Solo red interna</td></tr>
+    <tr><td>db</td><td>mariadb:11.4</td><td>Persistencia de reservaciones</td><td>Solo red interna</td></tr>
+    <tr><td>redis</td><td>redis:7.4-alpine</td><td>Caché (TTL 60 s) y contador</td><td>Solo red interna</td></tr>
+    <tr><td>mailpit</td><td>axllent/mailpit:v1.21.8</td><td>Captura de correos de prueba</td><td>Interfaz web 8025</td></tr>
+  </table>
+  <p><b>Flujo:</b> el navegador abre <code>http://localhost:8081</code>. Nginx entrega los archivos estáticos y
+  reenvía las peticiones <code>/api/*</code> a <code>http://backend:80</code>. El backend consulta
+  <code>db:5432</code>, usa <code>redis:6379</code> para la caché y el contador, y envía correos a
+  <code>mailpit:1025</code>. Desde el host, la interfaz de Mailpit está en <code>http://localhost:8025</code>.</p>
+</section>
+
+<!-- ===================== 4. ESTRUCTURA ===================== -->
+<section class="cap">
+  <h2>4. Estructura del repositorio</h2>
+  <pre>proyecto-chavez-sandra/
+├── compose.yaml          # definición de los cinco servicios
+├── .env.example          # plantilla de variables sin contraseñas reales
+├── .gitignore            # excluye .env
+├── README.md             # documentación y pasos para reproducir
+├── database/
+│   └── init.sql          # tabla, restricciones y 3 registros iniciales
+├── backend/
+│   ├── Dockerfile        # php:8.3-apache + pdo_mysql + phpredis
+│   └── src/
+│       ├── index.php     # router y endpoints REST
+│       └── lib/          # Database.php, Cache.php, Mailer.php
+├── frontend/
+│   ├── Dockerfile        # nginx:1.27-alpine
+│   ├── nginx.conf        # estáticos + proxy /api/ → backend
+│   └── src/              # index.html, app.js, styles.css
+└── informe/              # este reporte y sus capturas</pre>
+  <figure><img src="capturas/t01_estructura.png"><figcaption><b>Figura 2.</b> Archivos del proyecto. El archivo <code>.env</code> existe solo localmente y no se versiona.</figcaption></figure>
+</section>
+
+<!-- ===================== 5. DESARROLLO ===================== -->
+<section class="cap">
+  <h2>5. Desarrollo de la práctica por etapas</h2>
+
+  <h3>Etapa 1. Preparación</h3>
+  <p>Se creó la estructura de directorios y el archivo <code>.gitignore</code>, que excluye <code>.env</code>.
+  También se creó <code>.env.example</code> con valores de ejemplo. El archivo <code>.env</code> local tiene
+  contraseñas generadas aleatoriamente. Se eligió el dominio asignado y se diseñó <code>init.sql</code> con una
+  tabla, una llave primaria, restricciones y tres registros iniciales (sección 2).</p>
+
+  <h3>Archivo compose.yaml</h3>
+  <p>Este es el archivo completo que define los cinco servicios, la red <code>app_network</code>, los volúmenes,
+  los health checks, las dependencias y la política <code>restart: unless-stopped</code>:</p>
+  <pre># Práctica individual: Docker Compose con cinco servicios
+# Sistema asignado: Reservación de espacios (último dígito 8)
+name: reservaciones
+
+services:
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-8081}:80"   # único acceso público a la aplicación (8081 por defecto)
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - app_network
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    expose:
+      - "80"                 # solo red interna, sin puerto en el host
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      CACHE_TTL: ${CACHE_TTL:-60}
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      MAIL_FROM: ${MAIL_FROM:-reservaciones@practica.local}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - app_network
+
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    # MariaDB escucha por defecto en 3306; la práctica pide DB_PORT=5432
+    command: ["--port=5432", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    environment:
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - MariaDB_data:/var/lib/mysql      # directorio de datos de MariaDB
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb -h 127.0.0.1 -P 5432 -u\"$$MARIADB_USER\" -p\"$$MARIADB_PASSWORD\" -e 'SELECT 1' \"$$MARIADB_DATABASE\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - app_network
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$$REDIS_PASSWORD\""]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDISCLI_AUTH: ${REDIS_PASSWORD}   # permite usar redis-cli sin escribir -a
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
+
+  mailpit:
+    image: axllent/mailpit:v1.21.8
+    restart: unless-stopped
+    ports:
+      - "8025:8025"          # interfaz web; el SMTP 1025 queda interno
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  MariaDB_data:
+  redis_data:</pre>
+  <figure><img src="capturas/t02_config.png"><figcaption><b>Figura 3.</b> <code>docker compose config</code> valida el archivo sin errores. Se ven los cinco servicios, los dos volúmenes y la red.</figcaption></figure>
+
+  <h3>Etapa 2. Base de datos y Redis</h3>
+  <ul>
+    <li><b>db:</b> usa la imagen <code>mariadb:11.4</code> con <code>--port=5432</code>. El volumen nombrado
+    <code>MariaDB_data</code> se monta en el directorio de datos y <code>init.sql</code> se monta en
+    <code>/docker-entrypoint-initdb.d/</code>. El health check ejecuta un <code>SELECT 1</code> por TCP con el
+    usuario de la aplicación, así que solo pasa cuando la inicialización terminó.</li>
+    <li><b>redis:</b> usa la imagen <code>redis:7.4-alpine</code> con persistencia AOF
+    (<code>--appendonly yes</code>), contraseña (<code>--requirepass</code>) y el volumen <code>redis_data</code>.
+    El health check es <code>redis-cli ping</code>.</li>
+  </ul>
+
+  <h3>Etapa 3. Backend</h3>
+  <p>El Dockerfile del backend parte de <code>php:8.3-apache</code> e instala las extensiones
+  <code>pdo_mysql</code> (para MariaDB) y <code>redis</code> (phpredis, mediante PECL). La directiva
+  <code>FallbackResource</code> envía todas las rutas a <code>index.php</code>, que funciona como router de la API.</p>
+  <pre>FROM php:8.3-apache
+
+# Extensiones: pdo_mysql para MariaDB y phpredis para Redis
+RUN docker-php-ext-install pdo_mysql \
+    &amp;&amp; pecl install redis-6.1.0 \
+    &amp;&amp; docker-php-ext-enable redis \
+    &amp;&amp; rm -rf /tmp/pear
+
+# Todas las rutas que no sean archivos se atienden con index.php (router de la API)
+RUN echo 'FallbackResource /index.php' &gt; /etc/apache2/conf-enabled/api-router.conf \
+    &amp;&amp; echo 'ServerName backend' &gt; /etc/apache2/conf-enabled/servername.conf \
+    &amp;&amp; printf '&lt;Directory /var/www/html/lib&gt;\n  Require all denied\n&lt;/Directory&gt;\n' &gt; /etc/apache2/conf-enabled/deny-lib.conf
+
+COPY src/ /var/www/html/
+
+EXPOSE 80</pre>
+  <table>
+    <tr><th>Método</th><th>Ruta</th><th>Descripción</th><th>Códigos</th></tr>
+    <tr><td>GET</td><td>/health</td><td>Verifica la conexión con MariaDB y Redis</td><td>200 / 503</td></tr>
+    <tr><td>GET</td><td>/reservaciones[?buscar=]</td><td>Listado con caché y contador</td><td>200 / 422</td></tr>
+    <tr><td>GET</td><td>/reservaciones/{id}</td><td>Detalle</td><td>200 / 404</td></tr>
+    <tr><td>POST</td><td>/reservaciones</td><td>Crea, invalida la caché y envía el correo</td><td>201 / 400 / 409 / 422</td></tr>
+    <tr><td>PUT</td><td>/reservaciones/{id}</td><td>Actualiza (también parcialmente)</td><td>200 / 404 / 409 / 422</td></tr>
+    <tr><td>DELETE</td><td>/reservaciones/{id}</td><td>Elimina e invalida la caché</td><td>204 / 404</td></tr>
+    <tr><td>GET</td><td>/estadisticas</td><td>Contador y TTL de la caché</td><td>200</td></tr>
+  </table>
+  <p>La conexión usa las variables de entorno <code>DB_HOST=db</code>, <code>DB_PORT=5432</code>,
+  <code>REDIS_HOST=redis</code>, <code>REDIS_PORT=6379</code>, <code>SMTP_HOST=mailpit</code> y
+  <code>SMTP_PORT=1025</code>. Ninguna dirección es <code>localhost</code>. Este es el fragmento que implementa la
+  caché y el contador en el listado:</p>
+  <pre>$redis = redis_client();
+$consultas = $redis-&gt;incr(CONTADOR);              // contador_consultas
+$clave = cache_key($buscar);                       // reservaciones:lista
+$cache = $redis-&gt;get($clave);
+if ($cache !== false) {                            // HIT: respuesta desde Redis
+    header('X-Cache: HIT');
+    $registros = json_decode($cache, true);
+} else {                                           // MISS: consulta a MariaDB
+    header('X-Cache: MISS');
+    $registros = db()-&gt;query('SELECT * FROM reservaciones ORDER BY fecha, hora_inicio')-&gt;fetchAll();
+    $redis-&gt;setex($clave, cache_ttl(), json_encode($registros));   // TTL 60 s
+}</pre>
+  <p>Cada POST, PUT o DELETE llama a <code>cache_invalidar()</code>, que borra la clave del listado y las claves
+  de búsquedas. Así la caché nunca entrega datos viejos después de un cambio.</p>
+
+  <h3>Etapa 4. Mailpit</h3>
+  <p>El backend incluye un cliente SMTP mínimo (<code>lib/Mailer.php</code>). Se conecta a <code>mailpit:1025</code>
+  con <code>fsockopen</code> y envía los comandos EHLO, MAIL FROM, RCPT TO y DATA. Cuando se crea una reservación,
+  envía un correo HTML con sus datos al correo del solicitante. Mailpit es solo una herramienta de desarrollo:
+  captura el mensaje y lo muestra en su interfaz web, pero <b>no entrega correo real</b>.</p>
+
+  <h3>Etapa 5. Frontend y proxy</h3>
+  <p>El frontend es una página HTML, CSS y JavaScript servida por Nginx. El JavaScript usa la URL relativa
+  <code>/api</code> y nunca <code>localhost</code>. Nginx reenvía <code>/api/</code> a <code>http://backend:80</code>
+  y quita el prefijo. Se usa el DNS interno de Docker (<code>127.0.0.11</code>) con una variable para que Nginx vuelva
+  a resolver el nombre <code>backend</code> si el contenedor se reinicia y cambia de IP.</p>
+  <pre>server {
+    listen 80;
+    server_name _;
+
+    # DNS interno de Docker: resuelve "backend" en cada petición,
+    # así Nginx sigue funcionando si el contenedor del backend se reinicia y cambia de IP.
+    resolver 127.0.0.11 valid=10s ipv6=off;
+
+    root  /usr/share/nginx/html;
+    index index.html;
+
+    # Archivos estáticos
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Proxy de /api/ hacia el backend: /api/reservaciones -&gt; http://backend/reservaciones
+    location /api/ {
+        set $backend_upstream http://backend:80;
+        rewrite ^/api/(.*)$ /$1 break;
+        proxy_pass $backend_upstream;
+
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout    15s;
+    }
+}</pre>
+</section>
+
+<!-- ===================== 6. INTEGRACIÓN ===================== -->
+<section class="cap">
+  <h2>6. Integración y puesta en marcha</h2>
+  <p>Para partir de cero, se eliminaron contenedores, volúmenes y red con <code>docker compose down -v</code>. Después
+  se levantó todo con <code>docker compose up -d --build --wait</code>. La salida muestra el orden de arranque que
+  imponen los health checks: primero <code>db</code> y <code>redis</code> llegan a <i>Healthy</i>, luego arranca
+  <code>backend</code>, y cuando este es <i>Healthy</i> arranca <code>frontend</code>.</p>
+  <figure><img src="capturas/t03_reinicio.png"><figcaption><b>Figura 4.</b> Reinicio limpio y construcción de las imágenes propias.</figcaption></figure>
+  <figure><img src="capturas/t04_ps.png"><figcaption><b>Figura 5.</b> <code>docker compose ps</code>: los cinco servicios están activos y db, redis, backend y mailpit aparecen como <i>healthy</i>. Solo frontend (8081) y mailpit (8025) tienen puertos publicados.</figcaption></figure>
+  <figure><img src="capturas/t05_images.png"><figcaption><b>Figura 6.</b> <code>docker compose images</code>: dos imágenes propias (frontend y backend) y tres imágenes oficiales con versión explícita.</figcaption></figure>
+  <figure><img src="capturas/t06_health.png"><figcaption><b>Figura 7.</b> El endpoint <code>/api/health</code>, consultado con <code>curl.exe</code> y con <code>Invoke-RestMethod</code>, confirma la conexión con MariaDB y Redis a través del proxy de Nginx.</figcaption></figure>
+  <figure><img src="capturas/t07_mariadb_inicial.png"><figcaption><b>Figura 8.</b> MariaDB contiene los tres registros de <code>init.sql</code>. Redis todavía no tiene claves.</figcaption></figure>
+</section>
+
+<!-- ===================== 7. CRUD ===================== -->
+<section class="cap">
+  <h2>7. Pruebas funcionales del CRUD</h2>
+  <h3>7.1 Consultar</h3>
+  <figure><img src="capturas/u01_listado_inicial.png"><figcaption><b>Figura 9.</b> La interfaz en <code>http://localhost:8081</code> muestra los registros de MariaDB. Los indicadores superiores muestran el estado de la API, la fuente de los datos y el contador.</figcaption></figure>
+  <h3>7.2 Crear</h3>
+  <figure><img src="capturas/u02_formulario_crear.png"><figcaption><b>Figura 10.</b> Formulario para registrar una nueva reservación.</figcaption></figure>
+  <figure><img src="capturas/u03_creado.png"><figcaption><b>Figura 11.</b> La reservación #4 se creó: hay un mensaje de éxito, el correo se envió y el listado se actualizó.</figcaption></figure>
+
+  <h3>7.3 Manejo de errores</h3>
+  <figure><img src="capturas/u05_validacion.png"><figcaption><b>Figura 12.</b> Validación en el frontend: los campos inválidos se marcan en rojo (espacio muy corto, correo inválido y hora de fin anterior a la de inicio).</figcaption></figure>
+  <figure><img src="capturas/u04_duplicado_409.png"><figcaption><b>Figura 13.</b> Al intentar reservar el mismo espacio, fecha y hora, el backend responde 409 y el mensaje aparece en la interfaz.</figcaption></figure>
+
+  <h3>7.4 Actualizar</h3>
+  <figure><img src="capturas/u06_editar_formulario.png"><figcaption><b>Figura 14.</b> Edición de la reservación #2: se cambian la hora de fin (15:00) y el estado.</figcaption></figure>
+  <figure><img src="capturas/u07_editado.png"><figcaption><b>Figura 15.</b> La reservación #2 se actualizó con el nuevo horario y el estado <i>confirmada</i>.</figcaption></figure>
+  <figure><img src="capturas/u08_cambio_estado.png"><figcaption><b>Figura 16.</b> Cambio rápido del estado desde la tabla (reservación #4 pasa a <i>confirmada</i>).</figcaption></figure>
+
+  <h3>7.5 Eliminar</h3>
+  <p>El botón <b>Eliminar</b> pide confirmación con el mensaje
+  <i>“¿Eliminar la reservación #3 (Sala de Juntas A)?”</i>. Solo si el usuario acepta se envía el
+  <code>DELETE</code>.</p>
+  <figure><img src="capturas/u09_eliminado.png"><figcaption><b>Figura 17.</b> La reservación #3 se eliminó después de confirmar.</figcaption></figure>
+  <figure><img src="capturas/t08_mariadb_crud.png"><figcaption><b>Figura 18.</b> Consulta directa a MariaDB: los cambios hechos desde la interfaz quedaron guardados (#2 editada, #3 eliminada, #4 creada).</figcaption></figure>
+  <figure><img src="capturas/t20_api.png"><figcaption><b>Figura 19.</b> Códigos HTTP de la API: 404 (no existe), 422 (datos inválidos), creación de un registro de prueba, 204 (eliminado), 404 (ya eliminado) y 405 (método no permitido).</figcaption></figure>
+</section>
+
+<!-- ===================== 8. PERSISTENCIA ===================== -->
+<section class="cap">
+  <h2>8. Persistencia en MariaDB</h2>
+  <p>Se consultaron los registros, se eliminó el contenedor de la base de datos con <code>docker compose rm -sf db</code>
+  sin borrar el volumen y se creó un contenedor nuevo. Los registros siguen presentes porque el directorio de datos de
+  MariaDB está en el volumen nombrado <code>reservaciones_MariaDB_data</code>, que existe fuera del ciclo de vida del
+  contenedor.</p>
+  <figure><img src="capturas/t12_persistencia.png"><figcaption><b>Figura 20.</b> Los mismos registros aparecen antes y después de recrear el contenedor <code>db</code>.</figcaption></figure>
+  <figure><img src="capturas/t16_volumen.png"><figcaption><b>Figura 21.</b> <code>docker volume inspect</code> del volumen de MariaDB, que pertenece al proyecto <i>reservaciones</i>.</figcaption></figure>
+</section>
+
+<!-- ===================== 9. REDIS ===================== -->
+<section class="cap">
+  <h2>9. Redis: caché, invalidación y contador</h2>
+  <p>El listado se guarda en la clave <code>reservaciones:lista</code> con un TTL de 60 segundos (el mínimo pedido es
+  30). La primera consulta después de un cambio es un <b>MISS</b>: va a MariaDB y guarda el resultado en Redis. Las
+  consultas siguientes son un <b>HIT</b>: se responden desde Redis. Cualquier creación, edición o eliminación borra
+  la clave.</p>
+  <figure><img src="capturas/t09_cache.png"><figcaption><b>Figura 22.</b> Después de un PUT (que invalida la caché), la primera consulta responde <code>X-Cache: MISS</code> desde MariaDB y la segunda <code>X-Cache: HIT</code> desde Redis. Los logs del backend registran INVALIDADA, MISS y HIT.</figcaption></figure>
+  <figure><img src="capturas/u11_cache_redis.png"><figcaption><b>Figura 23.</b> En la interfaz, el indicador “Fuente: Redis (caché)” aparece cuando el listado se sirve desde la caché.</figcaption></figure>
+  <figure><img src="capturas/t10_redis.png"><figcaption><b>Figura 24.</b> Claves de Redis, TTL restante, contador <code>contador_consultas</code> (sube de 23 a 26 tras tres consultas) y persistencia AOF activada.</figcaption></figure>
+</section>
+
+<!-- ===================== 10. MAILPIT ===================== -->
+<section class="cap">
+  <h2>10. Notificaciones con Mailpit</h2>
+  <p>Cada vez que se crea una reservación, el backend envía un correo a <code>mailpit:1025</code>. El mensaje se
+  puede ver en <code>http://localhost:8025</code> con su asunto, destinatario y contenido.</p>
+  <figure><img src="capturas/m01_mailpit_bandeja.png"><figcaption><b>Figura 25.</b> Bandeja de Mailpit con la notificación de la reservación creada.</figcaption></figure>
+  <figure><img src="capturas/m02_mailpit_mensaje.png"><figcaption><b>Figura 26.</b> Detalle del correo: remitente, destinatario <code>sandra.chavez@practica.local</code>, asunto <i>“Reservación #4: Laboratorio de Cómputo 2”</i> y una tabla con los datos del registro.</figcaption></figure>
+  <figure><img src="capturas/t11_mail_logs.png"><figcaption><b>Figura 27.</b> Logs del backend con los envíos y la lista de asuntos obtenida de la API de Mailpit.</figcaption></figure>
+</section>
+
+<!-- ===================== 11. RED ===================== -->
+<section class="cap">
+  <h2>11. Red, aislamiento y recuperación</h2>
+  <h3>11.1 Red app_network</h3>
+  <figure><img src="capturas/t15_red.png"><figcaption><b>Figura 28.</b> <code>docker network inspect</code>: los cinco contenedores están en <code>reservaciones_app_network</code> (bridge, 172.20.0.0/16).</figcaption></figure>
+  <h3>11.2 Aislamiento</h3>
+  <p>Solo <code>frontend</code> y <code>mailpit</code> publican puertos. En la columna PORTS, <code>db</code>,
+  <code>redis</code> y <code>backend</code> no tienen el prefijo <code>0.0.0.0:</code>. El valor <code>3306/tcp</code>
+  que aparece en db es solo el puerto declarado en la imagen de MariaDB, y no está publicado.</p>
+  <figure><img src="capturas/t13_aislamiento.png"><figcaption><b>Figura 29.</b> db y redis no tienen puertos publicados. Desde el host, <code>Test-NetConnection</code> falla en 5432 y 6379, y solo tiene éxito en 8081.</figcaption></figure>
+  <h3>11.3 Recuperación</h3>
+  <p>Con el backend detenido, Nginx responde <b>502 Bad Gateway</b>. Al volver a iniciarlo, la aplicación
+  recupera su operación sin reiniciar Nginx, porque Nginx vuelve a resolver el nombre <code>backend</code> con el
+  DNS interno.</p>
+  <figure><img src="capturas/t14_recuperacion.png"><figcaption><b>Figura 30.</b> Detener el backend devuelve 502; al iniciarlo de nuevo, la API vuelve a responder 200.</figcaption></figure>
+</section>
+
+<!-- ===================== 12. DNS ===================== -->
+<section class="cap">
+  <h2>12. Resolución de nombres por DNS interno</h2>
+  <p>Docker Compose crea la red de usuario <code>reservaciones_app_network</code> y conecta a ella los cinco
+  contenedores. Cada red de usuario tiene un servidor DNS interno en <code>127.0.0.11</code>, que aparece como
+  <code>nameserver</code> en el <code>/etc/resolv.conf</code> de cada contenedor. Ese servidor registra el
+  <b>nombre de cada servicio</b> como alias de la IP de su contenedor:</p>
+  <ul>
+    <li><b>db</b>: el backend se conecta a <code>db:5432</code> y el DNS devuelve la IP del contenedor de MariaDB (172.20.0.2).</li>
+    <li><b>redis</b>: el backend se conecta a <code>redis:6379</code> y obtiene 172.20.0.3.</li>
+    <li><b>mailpit</b>: el backend envía SMTP a <code>mailpit:1025</code> y obtiene 172.20.0.4.</li>
+    <li><b>backend</b>: Nginx reenvía <code>/api/</code> a <code>http://backend:80</code> y obtiene 172.20.0.5.</li>
+  </ul>
+  <p>Las IP pueden cambiar cuando un contenedor se recrea, pero el nombre se mantiene. Por eso la configuración
+  usa nombres de servicio y nunca IP fijas ni <code>localhost</code>. Dentro de un contenedor, <code>localhost</code>
+  es el mismo contenedor.</p>
+  <figure><img src="capturas/t17_dns.png"><figcaption><b>Figura 31.</b> Resolución de <code>db</code>, <code>redis</code>, <code>mailpit</code> y <code>frontend</code> desde el backend, y de <code>backend</code> desde el frontend, con el DNS 127.0.0.11.</figcaption></figure>
+</section>
+
+<!-- ===================== 13. SEGURIDAD ===================== -->
+<section class="cap">
+  <h2>13. Seguridad</h2>
+  <ul>
+    <li>Las contraseñas están solo en <code>.env</code>, que está excluido en <code>.gitignore</code>. En el repositorio se incluye <code>.env.example</code> sin valores reales.</li>
+    <li>Redis requiere contraseña (<code>--requirepass</code>). El backend usa un usuario de aplicación de MariaDB, no el usuario root.</li>
+    <li>No se usa <code>privileged</code>, no se monta <code>/var/run/docker.sock</code> y no se usa <code>container_name</code>, lo que permite escalar servicios.</li>
+    <li>Solo se publican los puertos 8081 y 8025. MariaDB, Redis y el backend son accesibles únicamente por la red interna.</li>
+    <li>La carpeta <code>lib/</code> del backend no se puede abrir por HTTP (responde 403). Las consultas usan sentencias preparadas (PDO), lo que evita inyección SQL. El frontend escapa el HTML de los datos.</li>
+  </ul>
+  <figure><img src="capturas/t18_seguridad.png"><figcaption><b>Figura 32.</b> <code>.gitignore</code>, <code>.env.example</code> sin secretos reales, ausencia de opciones peligrosas en <code>compose.yaml</code> y acceso denegado a <code>lib/</code>.</figcaption></figure>
+
+  <h2 style="margin-top:22px">14. Mejora individual: filtro de búsqueda</h2>
+  <p>Se agregó un campo de búsqueda en la interfaz. Envía <code>GET /api/reservaciones?buscar=texto</code>, y el
+  backend busca el texto en el espacio, el solicitante y el correo con <code>LIKE</code> y parámetros preparados.
+  Cada búsqueda se guarda en caché con su propia clave (<code>reservaciones:buscar:&lt;md5&gt;</code>), y esas claves
+  también se borran cuando hay cambios. Involucra al frontend, al backend, a MariaDB y a Redis.</p>
+  <figure><img src="capturas/u10_busqueda.png"><figcaption><b>Figura 33.</b> La búsqueda de “laboratorio” muestra solo las reservaciones que coinciden.</figcaption></figure>
+  <figure><img src="capturas/t19_busqueda.png"><figcaption><b>Figura 34.</b> Respuesta de la API para <code>?buscar=laboratorio</code>.</figcaption></figure>
+</section>
+
+<!-- ===================== 15. RESUMEN ===================== -->
+<section class="cap">
+  <h2>15. Resumen de pruebas obligatorias</h2>
+  <table>
+    <tr><th>Prueba</th><th>Procedimiento</th><th>Resultado obtenido</th><th>Evidencia</th></tr>
+    <tr><td>Validación YAML</td><td><code>docker compose config</code></td><td class="ok">Sin errores</td><td>Fig. 3</td></tr>
+    <tr><td>Estado</td><td><code>docker compose ps</code></td><td class="ok">5 servicios activos; db y redis healthy</td><td>Fig. 5</td></tr>
+    <tr><td>CRUD</td><td>Crear, editar y eliminar desde la interfaz</td><td class="ok">Cambios visibles y persistentes</td><td>Fig. 9–19</td></tr>
+    <tr><td>Persistencia</td><td>Recrear db sin eliminar el volumen</td><td class="ok">Los registros permanecen</td><td>Fig. 20</td></tr>
+    <tr><td>Caché</td><td>Consultar dos veces y revisar logs y TTL</td><td class="ok">2.ª consulta desde Redis (HIT)</td><td>Fig. 22–24</td></tr>
+    <tr><td>Invalidación</td><td>Crear o editar un registro y consultar</td><td class="ok">El listado muestra el dato nuevo (MISS)</td><td>Fig. 11, 22</td></tr>
+    <tr><td>Contador</td><td>Consultar el listado varias veces</td><td class="ok">El contador sube de 23 a 26</td><td>Fig. 24</td></tr>
+    <tr><td>Correo</td><td>Crear un registro y abrir Mailpit</td><td class="ok">Mensaje visible en el puerto 8025</td><td>Fig. 25–27</td></tr>
+    <tr><td>Aislamiento</td><td>Revisar <code>docker compose ps</code></td><td class="ok">db y redis sin puertos publicados</td><td>Fig. 29</td></tr>
+    <tr><td>Recuperación</td><td>Detener el backend y volver a iniciarlo</td><td class="ok">502 → 200, la aplicación se recupera</td><td>Fig. 30</td></tr>
+  </table>
+
+  <h2 style="margin-top:22px">16. Notas técnicas</h2>
+  <div class="aviso">
+    <p><b>Imagen, puerto y ruta de MariaDB.</b> La guía pide la imagen <code>MariaDB:16-alpine</code>, el puerto
+    <code>5432</code> y la ruta <code>/var/lib/MariaDB/data</code>. Esos valores corresponden a PostgreSQL:
+    MariaDB no tiene versión 16, su puerto por defecto es 3306 y su directorio de datos es <code>/var/lib/mysql</code>.
+    Para cumplir con lo pedido de forma funcional:</p>
+    <ul>
+      <li>Se usó <code>mariadb:11.4</code>, la versión LTS vigente, con versión explícita.</li>
+      <li>MariaDB se inició con <code>--port=5432</code> para respetar <code>DB_PORT=5432</code>.</li>
+      <li>El volumen nombrado <code>MariaDB_data</code> se montó en <code>/var/lib/mysql</code>, que es el directorio real de datos.</li>
+    </ul>
+  </div>
+  <div class="nota">
+    <p>El puerto del frontend se puede cambiar con la variable <code>FRONTEND_PORT</code> (por defecto 8081), por si
+    otro proyecto ya ocupa ese puerto. Las capturas de terminal se tomaron de una consola real de Windows PowerShell,
+    ejecutando cada comando dentro del directorio del proyecto.</p>
+  </div>
+</section>
+
+<!-- ===================== 17. REFLEXIÓN ===================== -->
+<section class="cap">
+  <h2>17. Preguntas de reflexión</h2>
+  <p><b>1. ¿Por qué el backend debe usar db:5432 y no localhost para conectarse a MariaDB?</b><br>
+  Cada contenedor tiene su propio espacio de red. Dentro del contenedor del backend, <code>localhost</code> es el
+  propio backend, donde no hay ninguna base de datos. <code>db</code> es el nombre del servicio, y el DNS interno de
+  Docker lo convierte en la IP del contenedor de MariaDB dentro de <code>app_network</code>.</p>
+
+  <p><b>2. ¿Cuál es la diferencia entre ports y expose en Docker Compose?</b><br>
+  <code>ports</code> publica un puerto del contenedor en la máquina anfitriona (por ejemplo, <code>8081:80</code>),
+  así que se puede acceder desde fuera de Docker. <code>expose</code> solo documenta el puerto y lo deja disponible
+  para otros contenedores de la misma red, sin publicarlo en el host.</p>
+
+  <p><b>3. ¿Qué información permanece cuando se elimina un contenedor y por qué?</b><br>
+  Permanece lo que está en volúmenes (<code>MariaDB_data</code>, <code>redis_data</code>) o en bind mounts, porque se
+  guarda fuera de la capa de escritura del contenedor. Lo que se escribió dentro del sistema de archivos del
+  contenedor se pierde. Las imágenes tampoco cambian.</p>
+
+  <p><b>4. ¿Qué problema resuelve el health check antes de iniciar el backend?</b><br>
+  Que un contenedor esté iniciado no significa que el servicio esté listo. MariaDB tarda unos segundos en
+  inicializarse y ejecutar <code>init.sql</code>. Con <code>depends_on: condition: service_healthy</code>, el backend
+  arranca cuando db y redis ya aceptan conexiones, y así se evitan fallos de conexión al iniciar.</p>
+
+  <p><b>5. ¿Cuándo puede una caché devolver información desactualizada y cómo lo evitaste?</b><br>
+  Ocurre cuando los datos cambian en MariaDB mientras la copia en Redis sigue vigente. Para evitarlo, el backend
+  invalida la caché en cada POST, PUT y DELETE: borra <code>reservaciones:lista</code> y las claves de búsqueda.
+  Además, las claves tienen un TTL de 60 segundos como límite.</p>
+
+  <p><b>6. ¿Por qué Mailpit no debe considerarse un servidor de correo de producción?</b><br>
+  Mailpit no entrega los mensajes a sus destinatarios: solo los captura para revisarlos. Tampoco ofrece, por
+  defecto, autenticación, TLS, colas con reintentos, SPF/DKIM ni almacenamiento duradero. Está diseñado para pruebas
+  en desarrollo.</p>
+
+  <p><b>7. ¿Qué servicio escalarías primero y qué cambio harías para evitar conflictos de puertos?</b><br>
+  El <b>backend</b>, porque no guarda estado: el estado está en MariaDB y Redis. Para escalarlo, no debe publicar
+  puertos en el host (en este proyecto usa <code>expose</code>) ni tener <code>container_name</code>. Así se puede
+  ejecutar <code>docker compose up -d --scale backend=3</code>: Nginx sigue llamando a <code>backend</code> y el DNS
+  de Docker reparte las peticiones entre las réplicas. Si se escalara un servicio con puerto publicado, habría que
+  quitar el puerto fijo o usar un rango.</p>
+
+  <p><b>8. ¿Qué riesgos existirían si MariaDB y Redis se publicaran hacia Internet?</b><br>
+  Ataques de fuerza bruta contra las contraseñas, robo, modificación o borrado de datos, explotación de
+  vulnerabilidades conocidas, ransomware que borra bases expuestas, y abuso de Redis para escribir archivos o
+  ejecutar comandos (<code>CONFIG SET</code>) o para consumir recursos (denegación de servicio). Por eso estos
+  servicios se quedan en la red interna.</p>
+</section>
+
+<!-- ===================== 18-19 ===================== -->
+<section class="cap">
+  <h2>18. Lista de cotejo</h2>
+  <table>
+    <tr><th>Criterio</th><th>Cumple</th></tr>
+    <tr><td>El archivo compose.yaml pasa <code>docker compose config</code>.</td><td class="ok">✔</td></tr>
+    <tr><td>Los cinco servicios aparecen en <code>docker compose ps</code>.</td><td class="ok">✔</td></tr>
+    <tr><td>No se usó <code>container_name</code> en servicios que se pretenden escalar.</td><td class="ok">✔</td></tr>
+    <tr><td>El backend usa db, redis y mailpit como nombres de host.</td><td class="ok">✔</td></tr>
+    <tr><td>MariaDB conserva la información al recrear su contenedor.</td><td class="ok">✔</td></tr>
+    <tr><td>Redis muestra claves, TTL y contador relacionados con la aplicación.</td><td class="ok">✔</td></tr>
+    <tr><td>Mailpit recibe una notificación al crear un registro.</td><td class="ok">✔</td></tr>
+    <tr><td>El frontend consume <code>/api/</code> por medio de Nginx.</td><td class="ok">✔</td></tr>
+    <tr><td>El archivo .env no está versionado.</td><td class="ok">✔</td></tr>
+    <tr><td>El README permite reproducir el proyecto desde cero.</td><td class="ok">✔</td></tr>
+  </table>
+
+  <h3>Reproducir el proyecto desde cero</h3>
+  <pre>cd proyecto-chavez-sandra
+Copy-Item .env.example .env   # editar las contraseñas
+docker compose up -d --build
+# Aplicación: http://localhost:8081    Mailpit: http://localhost:8025</pre>
+
+  <h2 style="margin-top:22px">19. Conclusiones</h2>
+  <p>La práctica permitió desplegar una aplicación completa repartida en cinco contenedores con un solo archivo
+  <code>compose.yaml</code>. La red interna y el DNS de Docker permiten que los servicios se encuentren por nombre sin
+  depender de IP. El volumen nombrado separa los datos del ciclo de vida del contenedor, como se comprobó al recrear
+  MariaDB sin perder información. Los health checks y <code>depends_on</code> garantizan un orden de arranque
+  confiable.</p>
+  <p>Redis mostró una integración real: el listado se sirvió desde la caché, la caché se invalidó en cada cambio y el
+  contador aumentó con cada consulta. Mailpit permitió verificar el envío de notificaciones sin enviar correo real.
+  Por último, publicar solo los puertos necesarios y mantener las contraseñas fuera del repositorio reduce la
+  superficie de ataque, una práctica básica para cualquier despliegue.</p>
+</section>
+
+</body>
+</html>

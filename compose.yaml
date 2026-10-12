@@ -1,0 +1,104 @@
+# Práctica individual: Docker Compose con cinco servicios
+# Sistema asignado: Reservación de espacios (último dígito 8)
+name: reservaciones
+
+services:
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-8081}:80"   # único acceso público a la aplicación (8081 por defecto)
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - app_network
+ 
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    expose:
+      - "80"                 # solo red interna, sin puerto en el host
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      CACHE_TTL: ${CACHE_TTL:-60}
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      MAIL_FROM: ${MAIL_FROM:-reservaciones@practica.local}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - app_network
+
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    # MariaDB escucha por defecto en 3306; la práctica pide DB_PORT=5432
+    command: ["--port=5432", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    environment:
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - MariaDB_data:/var/lib/mysql      # directorio de datos de MariaDB
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb -h 127.0.0.1 -P 5432 -u\"$$MARIADB_USER\" -p\"$$MARIADB_PASSWORD\" -e 'SELECT 1' \"$$MARIADB_DATABASE\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - app_network
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$$REDIS_PASSWORD\""]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDISCLI_AUTH: ${REDIS_PASSWORD}   # permite usar redis-cli sin escribir -a
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
+
+  mailpit:
+    image: axllent/mailpit:v1.21.8
+    restart: unless-stopped
+    ports:
+      - "8025:8025"          # interfaz web; el SMTP 1025 queda interno
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  MariaDB_data:
+  redis_data:
