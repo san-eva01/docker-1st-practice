@@ -1,8 +1,5 @@
 # Sistema de Reservación de Espacios — Docker Compose con cinco servicios
 
-**Asignatura:** Infraestructura de Servicios · **Modalidad:** Individual
-**Estudiante:** _________________ · **Número de control:** ______8 · **Grupo/fecha:** _________
-
 Este sistema corresponde al dominio asignado al último dígito **8** (*Reservación de espacios*, entidad **Reservación**).
 Permite crear, consultar, actualizar y eliminar reservaciones de espacios como auditorios, laboratorios y salas.
 El backend guarda los datos en **MariaDB**, conserva en caché las consultas del listado en **Redis**, lleva un
@@ -210,50 +207,3 @@ como alias de la IP de su contenedor.
 
 Para comprobarlo: `docker compose exec backend getent hosts db redis mailpit`.
 
----
-
-## 7. Preguntas de reflexión
-
-1. **¿Por qué `db:5432` y no `localhost`?** Cada contenedor tiene su propia pila de red. Dentro del backend,
-   `localhost` es el propio contenedor del backend, donde no hay ninguna base de datos. `db` es el nombre de
-   servicio que el DNS de Docker convierte en la IP del contenedor de MariaDB dentro de `app_network`.
-2. **¿Cuál es la diferencia entre `ports` y `expose`?** `ports` publica un puerto del contenedor en la máquina
-   anfitriona (`8081:80`), así que se puede acceder desde fuera de Docker. `expose` solo documenta el puerto o lo
-   hace visible a otros contenedores de la misma red, sin publicarlo en el host.
-3. **¿Qué información permanece al eliminar un contenedor?** Permanece lo que está en **volúmenes** (`MariaDB_data`,
-   `redis_data`) y en bind mounts, porque viven fuera de la capa de escritura del contenedor. Lo que se escribió
-   dentro del sistema de archivos del contenedor se pierde. La imagen tampoco cambia.
-4. **¿Qué resuelve el health check antes de iniciar el backend?** "Contenedor iniciado" no significa "servicio
-   listo". MariaDB tarda unos segundos en inicializar y ejecutar `init.sql`. Con
-   `depends_on: condition: service_healthy`, el backend arranca cuando db y redis ya aceptan conexiones, y así se
-   evitan errores de conexión al inicio.
-5. **¿Cuándo puede la caché devolver datos desactualizados y cómo se evitó?** Ocurre cuando los datos cambian
-   en MariaDB mientras la clave sigue viva en Redis. Para evitarlo, el backend borra `reservaciones:lista` y
-   todas las claves `reservaciones:buscar:*` en cada POST, PUT o DELETE. Además, las claves tienen un TTL de
-   60 s como límite.
-6. **¿Por qué Mailpit no sirve como servidor de correo de producción?** Mailpit no entrega los mensajes: solo los
-   atrapa. Tampoco tiene autenticación por defecto, TLS, colas con reintentos, SPF/DKIM ni almacenamiento
-   duradero. Está pensado para probar en desarrollo.
-7. **¿Qué servicio escalaría primero?** El `backend`, porque no guarda estado: el estado está en MariaDB y Redis.
-   Para escalarlo, el backend no debe publicar puertos en el host ni tener `container_name`. Así funciona
-   `docker compose up -d --scale backend=3`: Nginx sigue llamando a `backend` y el DNS de Docker reparte las
-   peticiones entre las réplicas.
-8. **¿Qué riesgos habría si MariaDB y Redis se publicaran en Internet?** Ataques de fuerza bruta contra las
-   contraseñas, robo o borrado de datos, explotación de vulnerabilidades, uso de Redis para ejecutar comandos
-   (`CONFIG SET`) o para ataques de denegación de servicio, y ransomware que borra bases expuestas. Estos servicios
-   deben quedarse en la red interna.
-
----
-
-## 8. Lista de cotejo
-
-- [x] `compose.yaml` pasa `docker compose config`.
-- [x] Los cinco servicios aparecen en `docker compose ps`.
-- [x] No se usa `container_name`.
-- [x] El backend usa `db`, `redis` y `mailpit` como nombres de host.
-- [x] MariaDB conserva la información al recrear su contenedor.
-- [x] Redis muestra claves, TTL y contador.
-- [x] Mailpit recibe una notificación al crear un registro.
-- [x] El frontend consume `/api/` a través de Nginx.
-- [x] `.env` no está versionado.
-- [x] Este README permite reproducir el proyecto desde cero.
